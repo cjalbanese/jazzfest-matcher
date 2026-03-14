@@ -692,16 +692,60 @@ const ARTIST_GENRES = {
 let groupId = null;
 let pollInterval = null;
 
+// --- PKCE helpers ---
+function generateRandomString(length) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, b => chars[b % chars.length]).join('');
+}
+
+async function generateCodeChallenge(verifier) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function startSpotifyAuth() {
+  const verifier = generateRandomString(64);
+  const challenge = await generateCodeChallenge(verifier);
+  sessionStorage.setItem('pkce_verifier', verifier);
+  sessionStorage.setItem('pkce_group', groupId);
+
+  const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&state=${encodeURIComponent(groupId)}&code_challenge_method=S256&code_challenge=${challenge}`;
+  window.location.href = authUrl;
+}
+
+async function exchangeCodeForToken(code) {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  const resp = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: SPOTIFY_CLIENT_ID,
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: REDIRECT_URI,
+      code_verifier: verifier
+    })
+  });
+  const data = await resp.json();
+  if (!data.access_token) throw new Error(data.error_description || data.error || 'Token exchange failed');
+  return data.access_token;
+}
+// --- End PKCE helpers ---
+
 function init() {
   const params = new URLSearchParams(window.location.search);
-  const hash = new URLSearchParams(window.location.hash.substring(1));
 
-  if (hash.get('access_token')) {
-    const token = hash.get('access_token');
-    const state = hash.get('state');
-    history.replaceState(null, '', window.location.pathname + '?group=' + encodeURIComponent(state));
-    groupId = state;
-    handleSpotifyCallback(token);
+  // Check for Spotify auth code callback
+  if (params.get('code') && params.get('state')) {
+    const code = params.get('code');
+    groupId = params.get('state') || sessionStorage.getItem('pkce_group');
+    history.replaceState(null, '', window.location.pathname + '?group=' + encodeURIComponent(groupId));
+    handleSpotifyCallback(code);
     return;
   }
 
@@ -723,14 +767,15 @@ function joinGroup() {
   document.getElementById('members-view').classList.remove('hidden');
   document.getElementById('group-name-display').textContent = groupId;
 
-  const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&state=${encodeURIComponent(groupId)}`;
-  document.getElementById('spotify-btn').href = authUrl;
+  // Wire up the button to use PKCE flow
+  document.getElementById('spotify-btn').href = '#';
+  document.getElementById('spotify-btn').onclick = (e) => { e.preventDefault(); startSpotifyAuth(); };
 
   loadMembers();
   pollInterval = setInterval(loadMembers, 5000);
 }
 
-async function handleSpotifyCallback(token) {
+async function handleSpotifyCallback(code) {
   document.getElementById('setup-view').classList.add('hidden');
   document.getElementById('connect-view').classList.remove('hidden');
   document.getElementById('members-view').classList.remove('hidden');
@@ -740,9 +785,13 @@ async function handleSpotifyCallback(token) {
   const status = document.getElementById('status');
   status.classList.remove('hidden');
   status.className = 'status status-loading';
-  status.innerHTML = '<div class="spinner"></div> Fetching your top artists...';
+  status.innerHTML = '<div class="spinner"></div> Connecting to Spotify...';
 
   try {
+    const token = await exchangeCodeForToken(code);
+
+    status.innerHTML = '<div class="spinner"></div> Fetching your top artists...';
+
     const headers = { 'Authorization': `Bearer ${token}` };
     const me = await fetch('https://api.spotify.com/v1/me', { headers }).then(r => r.json());
     const displayName = me.display_name || 'Unknown';
@@ -774,8 +823,8 @@ async function handleSpotifyCallback(token) {
     status.className = 'status status-ok';
     status.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Connected as <strong>${displayName}</strong> &mdash; ${Object.keys(artists).length} artists found`;
 
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&state=${encodeURIComponent(groupId)}`;
-    document.getElementById('spotify-btn').href = authUrl;
+    // Re-wire button for potential re-connect
+    document.getElementById('spotify-btn').onclick = (e) => { e.preventDefault(); startSpotifyAuth(); };
 
     loadMembers();
     pollInterval = setInterval(loadMembers, 5000);
