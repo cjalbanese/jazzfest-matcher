@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jazz Fest Day Picker</title>
+<style>
+  :root { --gold: #c5a84a; --navy: #1a2744; --bg: #fdf6e3; --card: #fff; --text: #1a2744; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .header { background: var(--navy); color: var(--gold); padding: 24px; text-align: center; }
+  .header h1 { font-size: 28px; letter-spacing: 1px; }
+  .header p { color: #8899bb; margin-top: 6px; font-size: 14px; }
+  .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+  .card { background: var(--card); border-radius: 12px; padding: 24px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .btn { display: inline-block; background: #1DB954; color: #fff; border: none; padding: 14px 28px; border-radius: 30px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .btn:hover { background: #1ed760; }
+  .btn-small { padding: 8px 18px; font-size: 13px; }
+  .btn-navy { background: var(--navy); }
+  .btn-navy:hover { background: #263a5e; }
+  .connected { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; }
+  .connected:last-child { border-bottom: none; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .day-card { margin: 12px 0; }
+  .day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .day-header h3 { font-size: 18px; }
+  .score-badge { background: var(--navy); color: var(--gold); padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
+  .bar-container { background: #e8e0d0; border-radius: 8px; height: 24px; margin: 8px 0; overflow: hidden; }
+  .bar { height: 100%; background: linear-gradient(90deg, var(--navy), #2d4a7a); border-radius: 8px; transition: width 0.6s ease; }
+  .matches { font-size: 13px; color: #555; margin-top: 6px; line-height: 1.6; }
+  .match-tag { display: inline-block; background: #eef4ff; color: var(--navy); padding: 2px 8px; border-radius: 4px; margin: 2px; font-size: 12px; }
+  .match-tag.headliner { background: var(--gold); color: var(--navy); font-weight: 600; }
+  .match-tag.genre { background: #f0f0f0; color: #555; }
+  .winner { border: 3px solid var(--gold); }
+  .winner-label { background: var(--gold); color: var(--navy); padding: 2px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; margin-left: 8px; }
+  .center { text-align: center; }
+  .mt { margin-top: 16px; }
+  .group-id-input { padding: 10px 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; width: 200px; text-align: center; }
+  .group-id-input:focus { outline: none; border-color: var(--navy); }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #ddd; border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none; }
+  .share-box { background: #f5f5f5; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; word-break: break-all; margin: 10px 0; cursor: pointer; }
+  .share-box:hover { background: #eee; }
+  #status { padding: 10px; margin: 10px 0; border-radius: 8px; font-size: 14px; }
+  .status-ok { background: #e8f5e9; color: #2e7d32; }
+  .status-err { background: #fce4ec; color: #c62828; }
+  .person-matches { font-size: 12px; color: #777; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>JAZZ FEST DAY PICKER</h1>
+  <p>New Orleans Jazz & Heritage Festival 2026 — Weekend 1</p>
+</div>
+
+<div class="container">
+  <!-- Step 1: Group setup -->
+  <div id="setup-view" class="card center">
+    <h2>Create or Join a Group</h2>
+    <p style="margin:12px 0;color:#666;">Everyone in your group connects their Spotify, and we'll find the best day for y'all.</p>
+    <div style="margin:20px 0;">
+      <input type="text" id="group-input" class="group-id-input" placeholder="group name" value="">
+    </div>
+    <button class="btn btn-navy" onclick="joinGroup()">Start</button>
+  </div>
+
+  <!-- Step 2: Connect Spotify -->
+  <div id="connect-view" class="card center hidden">
+    <h2>Connect Your Spotify</h2>
+    <p style="margin:12px 0;color:#666;">We'll read your top artists to match you with the lineup.</p>
+    <a id="spotify-btn" class="btn" href="#">Connect with Spotify</a>
+    <div id="status" class="hidden"></div>
+  </div>
+
+  <!-- Members list -->
+  <div id="members-view" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>Group: <span id="group-name-display"></span></h2>
+      <button class="btn btn-small btn-navy" onclick="copyShareLink()">Copy Invite Link</button>
+    </div>
+    <div id="members-list" class="mt"></div>
+    <div id="waiting" class="center mt" style="color:#888;">
+      <div class="spinner"></div>
+      <p style="margin-top:8px;">Waiting for others to connect...</p>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results-view" class="hidden">
+    <div class="card">
+      <h2 class="center">Best Day for Your Group</h2>
+      <div id="day-results" class="mt"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://txyynpyqaqbyssbabxrz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_cLO_U2DW-hOIU8_DbHsXtQ_rOuC9vzO';
+const SPOTIFY_CLIENT_ID = '6f00f3e09800450c8e8543fcecd1d863';
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+const SCOPES = 'user-top-read';
+
+const LINEUP = {
+  "Friday, April 24": {
+    headliners: ["Jon Batiste", "Lorde", "Sean Paul", "Big Freedia", "Ani DiFranco"],
+    all: ["Jon Batiste","Lorde","Sean Paul","Big Freedia","Ani DiFranco","Cyril Neville","Dirty Dozen Brass Band","Hiromi","Protoje","Sevana","GIVERS","Treme Brass Band","Lost Bayou Ramblers","Papa Mali","Seratones","Jesse McBride Big Band","Joy Clark","Rosie Ledet","Naughty Professor","Astral Project","Adonis Rose","Los Skarnales","Billy Iuso","Bon Bon Vivant","Parlor Greens","Loose Cattle","TBC Brass Band","Free Agents Brass Band","Louis Michot","Bonsoir Catin","Smoking Time Jazz Club","New Wave Brass Band","Free Spirit Brass Band","Lil' Ed & The Blues Imperials","Dixie Cups","Nell Simmons-Bradley","Sean Schulich","Conjunto Tierra Linda","Wendell Brunious"]
+  },
+  "Saturday, April 25": {
+    headliners: ["Stevie Nicks", "Tyler Childers", "Nas", "Jason Isbell", "Rhiannon Giddens"],
+    all: ["Stevie Nicks","Tyler Childers","Nas","Jason Isbell","Rhiannon Giddens","Bruce Hornsby","The Revivalists","Burning Spear","Dave Koz","Samantha Fish","John Boutté","Kermit Ruffins","Sonny Landreth","Dwayne Dopsie","Davell Crawford","Lutan Fyah","Pine Leaf Boys","Stooges Brass Band","Tin Men","Cristina Kaminis","Curley Taylor","Little Freddie King Blues Band","The Deslondes","Preservation Brass","Don Vappie","Crowe Boys","HaSizzle","Jelly Joseph","Ever More Nest","The Desert Nudes","Rumba Buena","Big 6 Brass Band"]
+  },
+  "Sunday, April 26": {
+    headliners: ["Rod Stewart", "David Byrne", "St. Vincent", "The Isley Brothers", "Irma Thomas"],
+    all: ["Rod Stewart","David Byrne","St. Vincent","The Isley Brothers","Irma Thomas","Jon Batiste","Carlos Vives","Ron Carter","Shirley Caesar","Boyfriend","Leftover Salmon","Catherine Russell","Marcia Ball","Tuba Skinny","Zachary Richard","Glen David Andrews Band","New Orleans Nightcrawlers","Kristin Diable","People Museum","Paul Sanchez","Chris Thomas King","Erica Falls","New Birth Brass Band","Kinfolk Brass Band","Trombone Shorty Academy","Horace Trahan","Jambalaya Cajun Band","Kelly Love Jones","River Eckert","Mahogany Brass Band","Young Pinstripe Brass Band","Knockaz Brass Band","Rockin' Dopsie Jr.","New Orleans Klezmer Allstars","Roger Lewis"]
+  }
+};
+
+// Genre knowledge for lineup artists
+const ARTIST_GENRES = {
+  "Jon Batiste":["jazz","funk","soul","r&b","pop"],"Lorde":["art pop","electropop","indie pop"],"Sean Paul":["dancehall","reggae","pop"],"Big Freedia":["bounce","hip hop","dance"],"Ani DiFranco":["folk","singer-songwriter","indie"],
+  "Dirty Dozen Brass Band":["brass band","jazz","funk"],"Hiromi":["jazz","jazz fusion"],"Protoje":["reggae"],"Seratones":["soul","rock"],"Naughty Professor":["jazz funk","funk","jazz"],
+  "Stevie Nicks":["classic rock","rock","pop rock"],"Tyler Childers":["country","folk","americana"],"Nas":["hip hop","east coast hip hop","rap"],"Jason Isbell":["americana","country rock","singer-songwriter"],
+  "Rhiannon Giddens":["folk","americana","bluegrass"],"Bruce Hornsby":["piano rock","jazz","pop rock"],"The Revivalists":["rock","southern rock"],"Burning Spear":["reggae","roots reggae"],
+  "Samantha Fish":["blues","blues rock"],"Kermit Ruffins":["jazz","new orleans jazz"],"The Deslondes":["americana","country","roots"],"Dave Koz":["smooth jazz","jazz"],
+  "Rod Stewart":["classic rock","pop rock","rock"],"David Byrne":["art rock","new wave","funk","art pop","post-punk"],"St. Vincent":["art pop","art rock","indie rock"],
+  "The Isley Brothers":["soul","funk","r&b","motown"],"Irma Thomas":["soul","r&b","new orleans r&b"],"Ron Carter":["jazz","hard bop","post-bop"],
+  "Tuba Skinny":["traditional jazz","jazz","dixieland"],"New Orleans Nightcrawlers":["brass band","funk","jazz"],"Kristin Diable":["soul","pop","r&b"],
+  "Chris Thomas King":["blues","blues rock"],"Trombone Shorty Academy":["brass band","funk","jazz"],"Carlos Vives":["vallenato","latin pop","cumbia"],
+  "Leftover Salmon":["bluegrass","jam band","folk"],"Marcia Ball":["blues","boogie-woogie","r&b"],"Catherine Russell":["vocal jazz","jazz","swing"],
+  "People Museum":["indie pop","art pop","synth pop"],"Erica Falls":["soul","r&b","gospel"],"Stooges Brass Band":["brass band","funk","jazz"],
+  "GIVERS":["indie pop","indie rock"],"Lost Bayou Ramblers":["cajun","folk"],"Bon Bon Vivant":["swing","jazz","gypsy jazz"],
+  "Pine Leaf Boys":["cajun","zydeco","folk"],"Boyfriend":["indie pop","pop"],"Sonny Landreth":["blues","slide guitar","blues rock"],
+  "Glen David Andrews Band":["brass band","jazz","funk"],"New Birth Brass Band":["brass band","funk"],"Kinfolk Brass Band":["brass band","funk"],
+  "Preservation Brass":["brass band","jazz","funk"],"Lil' Ed & The Blues Imperials":["blues","chicago blues"],
+  "Cyril Neville":["funk","soul","r&b"],"New Orleans Klezmer Allstars":["klezmer","jazz","world"],
+  "Roger Lewis":["jazz","funk","brass band"],"Shirley Caesar":["gospel"],"Zachary Richard":["cajun","zydeco","folk"],
+  "Little Freddie King Blues Band":["blues","delta blues"],"Rockin' Dopsie Jr.":["zydeco","cajun"],
+  "Dwayne Dopsie":["zydeco"],"Davell Crawford":["jazz","piano","r&b"],"Papa Mali":["rock","blues","psychedelic"],
+  "Astral Project":["jazz","jazz fusion"],"Adonis Rose":["jazz"],"Louis Michot":["cajun","folk"],
+  "Curley Taylor":["zydeco"],"Don Vappie":["jazz","traditional jazz"],"Mahogany Brass Band":["brass band","funk"],
+  "Horace Trahan":["zydeco","cajun"],"Young Pinstripe Brass Band":["brass band","funk"],"Knockaz Brass Band":["brass band","funk"]
+};
+
+let groupId = null;
+let pollInterval = null;
+
+// Check URL for group param or Spotify callback
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.substring(1));
+
+  // Check for Spotify callback (implicit grant)
+  if (hash.get('access_token')) {
+    const token = hash.get('access_token');
+    const state = hash.get('state'); // group id
+    // Clean URL
+    history.replaceState(null, '', window.location.pathname + '?group=' + encodeURIComponent(state));
+    groupId = state;
+    handleSpotifyCallback(token);
+    return;
+  }
+
+  // Check for group in URL
+  if (params.get('group')) {
+    groupId = params.get('group');
+    document.getElementById('group-input').value = groupId;
+    joinGroup();
+  }
+}
+
+function joinGroup() {
+  const input = document.getElementById('group-input').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  if (!input) return;
+  groupId = input;
+  history.replaceState(null, '', window.location.pathname + '?group=' + encodeURIComponent(groupId));
+
+  document.getElementById('setup-view').classList.add('hidden');
+  document.getElementById('connect-view').classList.remove('hidden');
+  document.getElementById('members-view').classList.remove('hidden');
+  document.getElementById('group-name-display').textContent = groupId;
+
+  // Set up Spotify auth link
+  const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&state=${encodeURIComponent(groupId)}`;
+  document.getElementById('spotify-btn').href = authUrl;
+
+  // Start polling for members
+  loadMembers();
+  pollInterval = setInterval(loadMembers, 5000);
+}
+
+async function handleSpotifyCallback(token) {
+  document.getElementById('setup-view').classList.add('hidden');
+  document.getElementById('connect-view').classList.remove('hidden');
+  document.getElementById('members-view').classList.remove('hidden');
+  document.getElementById('group-name-display').textContent = groupId;
+  document.getElementById('spotify-btn').classList.add('hidden');
+
+  const status = document.getElementById('status');
+  status.classList.remove('hidden');
+  status.className = '';
+  status.innerHTML = '<div class="spinner"></div> Fetching your top artists...';
+
+  try {
+    const headers = { 'Authorization': `Bearer ${token}` };
+
+    // Get user profile
+    const me = await fetch('https://api.spotify.com/v1/me', { headers }).then(r => r.json());
+    const displayName = me.display_name || 'Unknown';
+    const spotifyId = me.id;
+
+    // Get top artists across all time ranges
+    const artists = {};
+    for (const term of ['short_term', 'medium_term', 'long_term']) {
+      const data = await fetch(`https://api.spotify.com/v1/me/top/artists?time_range=${term}&limit=50`, { headers }).then(r => r.json());
+      for (const a of (data.items || [])) {
+        if (!artists[a.name]) {
+          artists[a.name] = a.genres || [];
+        }
+      }
+    }
+
+    status.innerHTML = `<div class="spinner"></div> Saving ${Object.keys(artists).length} artists for ${displayName}...`;
+
+    // Upsert to Supabase
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/jazzfest_groups`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        group_id: groupId,
+        display_name: displayName,
+        spotify_id: spotifyId,
+        top_artists: artists
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(err);
+    }
+
+    status.className = 'status-ok';
+    status.innerHTML = `Connected as <strong>${displayName}</strong> — ${Object.keys(artists).length} artists found!`;
+
+    // Set up auth link for re-connect and start polling
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&state=${encodeURIComponent(groupId)}`;
+    document.getElementById('spotify-btn').href = authUrl;
+
+    loadMembers();
+    pollInterval = setInterval(loadMembers, 5000);
+
+  } catch (e) {
+    status.className = 'status-err';
+    status.innerHTML = `Error: ${e.message}`;
+  }
+}
+
+async function loadMembers() {
+  if (!groupId) return;
+
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/jazzfest_groups?group_id=eq.${encodeURIComponent(groupId)}&select=display_name,top_artists,spotify_id`,
+    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+  );
+  const members = await resp.json();
+
+  // Render members
+  const list = document.getElementById('members-list');
+  list.innerHTML = members.map(m => {
+    const count = Object.keys(m.top_artists || {}).length;
+    const initial = (m.display_name || '?')[0].toUpperCase();
+    return `<div class="connected">
+      <div class="avatar">${initial}</div>
+      <div><strong>${m.display_name}</strong><br><span style="color:#888;font-size:12px;">${count} artists</span></div>
+    </div>`;
+  }).join('');
+
+  if (members.length === 0) {
+    list.innerHTML = '<p style="color:#888;text-align:center;padding:10px;">No one connected yet</p>';
+  }
+
+  // Show results if at least 1 person
+  if (members.length >= 1) {
+    renderResults(members);
+  }
+}
+
+function scoreDay(members, dayName, dayData) {
+  let totalScore = 0;
+  const memberDetails = [];
+
+  for (const member of members) {
+    const userArtists = member.top_artists || {};
+    const userNames = Object.keys(userArtists);
+    const userNamesLower = new Set(userNames.map(n => n.toLowerCase()));
+    const userGenres = new Set();
+    for (const genres of Object.values(userArtists)) {
+      for (const g of (genres || [])) userGenres.add(g.toLowerCase());
+    }
+
+    let score = 0;
+    const directMatches = [];
+    const genreMatches = [];
+
+    // Direct artist matches
+    for (const artist of dayData.all) {
+      if (userNamesLower.has(artist.toLowerCase())) {
+        const isHeadliner = dayData.headliners.includes(artist);
+        score += isHeadliner ? 25 : 12;
+        directMatches.push({ artist, headliner: isHeadliner });
+      }
+    }
+
+    // Genre matches
+    for (const artist of dayData.all) {
+      if (userNamesLower.has(artist.toLowerCase())) continue;
+      const aGenres = ARTIST_GENRES[artist] || [];
+      const overlap = aGenres.filter(g => userGenres.has(g.toLowerCase()));
+      if (overlap.length > 0) {
+        const isHeadliner = dayData.headliners.includes(artist);
+        const gs = isHeadliner ? overlap.length * 4 : overlap.length * 1.5;
+        score += gs;
+        genreMatches.push({ artist, genres: overlap, headliner: isHeadliner, score: gs });
+      }
+    }
+
+    genreMatches.sort((a, b) => b.score - a.score);
+    totalScore += score;
+    memberDetails.push({ name: member.display_name, score, directMatches, genreMatches: genreMatches.slice(0, 5) });
+  }
+
+  return { totalScore, memberDetails };
+}
+
+function renderResults(members) {
+  document.getElementById('results-view').classList.remove('hidden');
+
+  const days = Object.entries(LINEUP).map(([name, data]) => {
+    const result = scoreDay(members, name, data);
+    return { name, ...result };
+  });
+
+  days.sort((a, b) => b.totalScore - a.totalScore);
+  const maxScore = days[0].totalScore || 1;
+
+  const container = document.getElementById('day-results');
+  container.innerHTML = days.map((day, i) => {
+    const pct = Math.round((day.totalScore / maxScore) * 100);
+    const isWinner = i === 0;
+
+    const memberHtml = day.memberDetails.map(md => {
+      const direct = md.directMatches.map(m =>
+        `<span class="match-tag ${m.headliner ? 'headliner' : ''}">${m.artist}</span>`
+      ).join('');
+      const genre = md.genreMatches.map(m =>
+        `<span class="match-tag genre">${m.artist}</span>`
+      ).join('');
+      return `<div style="margin:8px 0;">
+        <strong>${md.name}</strong> <span style="color:#888;font-size:12px;">(${Math.round(md.score)} pts)</span>
+        ${direct ? '<br><span style="font-size:11px;color:#666;">Artists you listen to:</span> ' + direct : ''}
+        ${genre ? '<br><span style="font-size:11px;color:#666;">Genre matches:</span> ' + genre : ''}
+        ${!direct && !genre ? '<br><span style="font-size:11px;color:#999;">No strong matches</span>' : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="day-card card ${isWinner ? 'winner' : ''}">
+      <div class="day-header">
+        <h3>${day.name} ${isWinner ? '<span class="winner-label">BEST DAY</span>' : ''}</h3>
+        <span class="score-badge">${Math.round(day.totalScore)} pts</span>
+      </div>
+      <div class="bar-container"><div class="bar" style="width:${pct}%"></div></div>
+      <details style="margin-top:8px;">
+        <summary style="cursor:pointer;font-size:13px;color:#666;">Show individual matches</summary>
+        ${memberHtml}
+      </details>
+    </div>`;
+  }).join('');
+}
+
+function copyShareLink() {
+  const link = window.location.origin + window.location.pathname + '?group=' + encodeURIComponent(groupId);
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Invite Link', 2000);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
