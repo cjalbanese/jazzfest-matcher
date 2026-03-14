@@ -920,7 +920,7 @@ function scoreDay(members, dayData) {
       const overlap = aGenres.filter(g => userGenres.has(g.toLowerCase()));
       if (overlap.length > 0) {
         const isH = dayData.headliners.includes(artist);
-        const gs = isH ? overlap.length * 4 : overlap.length * 1.5;
+        const gs = isH ? overlap.length * 1.5 : overlap.length * 0.5;
         score += gs;
         genreMatches.push({ artist, genres: overlap, headliner: isH, score: gs });
       }
@@ -960,7 +960,7 @@ function renderResults(members) {
       return `<div class="member-match">
         <div class="member-match-name">${md.name} <span class="pts">${Math.round(md.score)} pts</span></div>
         ${direct ? '<div class="tag-label">Artists you listen to</div>' + direct : ''}
-        ${genre ? '<div class="tag-label">Genre matches</div>' + genre : ''}
+        ${genre ? '<div class="tag-label" style="opacity:0.5;margin-top:10px;">Similar vibes (based on genre overlap)</div><div style="opacity:0.45;">' + genre + '</div>' : ''}
         ${!direct && !genre ? '<div class="no-match">No strong matches</div>' : ''}
       </div>`;
     }).join('');
