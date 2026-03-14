@@ -645,7 +645,7 @@ const SUPABASE_URL = 'https://txyynpyqaqbyssbabxrz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_cLO_U2DW-hOIU8_DbHsXtQ_rOuC9vzO';
 const SPOTIFY_CLIENT_ID = '6f00f3e09800450c8e8543fcecd1d863';
 const REDIRECT_URI = window.location.origin + window.location.pathname;
-const SCOPES = 'user-top-read';
+const SCOPES = 'user-top-read user-library-read';
 
 const LINEUP = {
   "Friday": {
@@ -818,6 +818,32 @@ async function handleSpotifyCallback(code) {
           artists[a.name].weight += weight;
         }
       }
+    }
+
+    // Scan liked songs for lineup artist matches (weight = 2, between genre and top artist)
+    status.innerHTML = '<div class="spinner"></div> Scanning your liked songs...';
+    const allLineupArtists = new Set();
+    for (const day of Object.values(LINEUP)) {
+      for (const a of day.all) allLineupArtists.add(a.toLowerCase());
+    }
+    let offset = 0;
+    const limit = 50;
+    let scanned = 0;
+    const maxScan = 2000; // cap at 2000 liked songs to keep it reasonable
+    while (offset < maxScan) {
+      const data = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`, { headers }).then(r => r.json());
+      const items = data.items || [];
+      if (items.length === 0) break;
+      for (const item of items) {
+        for (const a of (item.track?.artists || [])) {
+          if (allLineupArtists.has(a.name.toLowerCase()) && !artists[a.name]) {
+            artists[a.name] = { genres: [], weight: 2, source: 'library' };
+          }
+        }
+      }
+      scanned += items.length;
+      offset += limit;
+      if (!data.next) break;
     }
 
     status.innerHTML = '<div class="spinner"></div> Saving your music profile...';
