@@ -833,7 +833,7 @@ async function handleSpotifyCallback(code) {
     let offset = 0;
     const limit = 50;
     let scanned = 0;
-    const maxScan = 2000; // cap at 2000 liked songs to keep it reasonable
+    const maxScan = 5000; // scan up to 5000 liked songs
     while (offset < maxScan) {
       const data = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`, { headers }).then(r => r.json());
       const items = data.items || [];
