@@ -798,11 +798,25 @@ async function handleSpotifyCallback(code) {
     const displayName = me.display_name || 'Unknown';
     const spotifyId = me.id;
 
+    // Collect artists with listening weight
+    // Weight = recency multiplier * rank score
+    // short_term (last 4wk) = 3x, medium_term (6mo) = 2x, long_term (all) = 1x
+    // Rank 1 = 1.0, Rank 50 = 0.2 (linear decay)
     const artists = {};
+    const termMultiplier = { short_term: 3, medium_term: 2, long_term: 1 };
     for (const term of ['short_term', 'medium_term', 'long_term']) {
       const data = await fetch(`https://api.spotify.com/v1/me/top/artists?time_range=${term}&limit=50`, { headers }).then(r => r.json());
-      for (const a of (data.items || [])) {
-        if (!artists[a.name]) artists[a.name] = a.genres || [];
+      const items = data.items || [];
+      for (let i = 0; i < items.length; i++) {
+        const a = items[i];
+        const rankScore = 1.0 - (i / items.length) * 0.8; // 1.0 down to 0.2
+        const weight = termMultiplier[term] * rankScore;
+        if (!artists[a.name]) {
+          artists[a.name] = { genres: a.genres || [], weight: weight };
+        } else {
+          // Accumulate weight across time ranges (appears in multiple = stronger signal)
+          artists[a.name].weight += weight;
+        }
       }
     }
 
@@ -874,10 +888,15 @@ function scoreDay(members, dayData) {
 
   for (const member of members) {
     const userArtists = member.top_artists || {};
-    const userNamesLower = new Set(Object.keys(userArtists).map(n => n.toLowerCase()));
+    // Build lookup: lowercase name -> { weight, genres }
+    const artistLookup = {};
     const userGenres = new Set();
-    for (const genres of Object.values(userArtists)) {
-      for (const g of (genres || [])) userGenres.add(g.toLowerCase());
+    for (const [name, data] of Object.entries(userArtists)) {
+      // Support both old format (genres array) and new format ({genres, weight})
+      const genres = Array.isArray(data) ? data : (data.genres || []);
+      const weight = Array.isArray(data) ? 1 : (data.weight || 1);
+      artistLookup[name.toLowerCase()] = { weight, genres };
+      for (const g of genres) userGenres.add(g.toLowerCase());
     }
 
     let score = 0;
@@ -885,15 +904,18 @@ function scoreDay(members, dayData) {
     const genreMatches = [];
 
     for (const artist of dayData.all) {
-      if (userNamesLower.has(artist.toLowerCase())) {
+      const entry = artistLookup[artist.toLowerCase()];
+      if (entry) {
         const isH = dayData.headliners.includes(artist);
-        score += isH ? 25 : 12;
-        directMatches.push({ artist, headliner: isH });
+        const base = isH ? 25 : 12;
+        const weighted = base * (entry.weight / 3); // normalize: avg weight ~3, so /3 keeps scale similar
+        score += weighted;
+        directMatches.push({ artist, headliner: isH, weight: entry.weight });
       }
     }
 
     for (const artist of dayData.all) {
-      if (userNamesLower.has(artist.toLowerCase())) continue;
+      if (artistLookup[artist.toLowerCase()]) continue;
       const aGenres = ARTIST_GENRES[artist] || [];
       const overlap = aGenres.filter(g => userGenres.has(g.toLowerCase()));
       if (overlap.length > 0) {
