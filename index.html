@@ -3,98 +3,641 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jazz Fest Day Picker</title>
+<title>Jazz Fest Day Picker 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --gold: #c5a84a; --navy: #1a2744; --bg: #fdf6e3; --card: #fff; --text: #1a2744; }
+  :root {
+    --navy: #0d1b2a;
+    --navy-mid: #1b2d45;
+    --navy-light: #243b5e;
+    --gold: #fed54c;
+    --gold-dim: #d4a017;
+    --coral: #ff6b6b;
+    --teal: #4ecdc4;
+    --purple: #a855f7;
+    --spotify: #1DB954;
+    --spotify-hover: #1ed760;
+    --glass: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.12);
+    --glass-hover: rgba(255,255,255,0.12);
+    --text: #e8edf3;
+    --text-dim: #8899b3;
+    --radius: 16px;
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  .header { background: var(--navy); color: var(--gold); padding: 24px; text-align: center; }
-  .header h1 { font-size: 28px; letter-spacing: 1px; }
-  .header p { color: #8899bb; margin-top: 6px; font-size: 14px; }
-  .container { max-width: 700px; margin: 0 auto; padding: 20px; }
-  .card { background: var(--card); border-radius: 12px; padding: 24px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .btn { display: inline-block; background: #1DB954; color: #fff; border: none; padding: 14px 28px; border-radius: 30px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; }
-  .btn:hover { background: #1ed760; }
-  .btn-small { padding: 8px 18px; font-size: 13px; }
-  .btn-navy { background: var(--navy); }
-  .btn-navy:hover { background: #263a5e; }
-  .connected { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; }
-  .connected:last-child { border-bottom: none; }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
-  .day-card { margin: 12px 0; }
-  .day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .day-header h3 { font-size: 18px; }
-  .score-badge { background: var(--navy); color: var(--gold); padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; }
-  .bar-container { background: #e8e0d0; border-radius: 8px; height: 24px; margin: 8px 0; overflow: hidden; }
-  .bar { height: 100%; background: linear-gradient(90deg, var(--navy), #2d4a7a); border-radius: 8px; transition: width 0.6s ease; }
-  .matches { font-size: 13px; color: #555; margin-top: 6px; line-height: 1.6; }
-  .match-tag { display: inline-block; background: #eef4ff; color: var(--navy); padding: 2px 8px; border-radius: 4px; margin: 2px; font-size: 12px; }
-  .match-tag.headliner { background: var(--gold); color: var(--navy); font-weight: 600; }
-  .match-tag.genre { background: #f0f0f0; color: #555; }
-  .winner { border: 3px solid var(--gold); }
-  .winner-label { background: var(--gold); color: var(--navy); padding: 2px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; margin-left: 8px; }
-  .center { text-align: center; }
-  .mt { margin-top: 16px; }
-  .group-id-input { padding: 10px 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; width: 200px; text-align: center; }
-  .group-id-input:focus { outline: none; border-color: var(--navy); }
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #ddd; border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated mesh gradient background */
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(254,213,76,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 85% 75%, rgba(78,205,196,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(168,85,247,0.06) 0%, transparent 60%),
+      var(--navy);
+    animation: meshShift 20s ease-in-out infinite alternate;
+  }
+  @keyframes meshShift {
+    0% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+    100% { background-position: 20% 30%, 70% 60%, 40% 70%; }
+  }
+
+  /* Floating orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+    z-index: 0;
+    animation: float 15s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .orb-1 { width: 400px; height: 400px; background: var(--gold); top: -10%; left: -5%; animation-delay: 0s; }
+  .orb-2 { width: 350px; height: 350px; background: var(--teal); bottom: -10%; right: -5%; animation-delay: -5s; }
+  .orb-3 { width: 250px; height: 250px; background: var(--purple); top: 40%; right: 20%; animation-delay: -10s; }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -20px) scale(1.05); }
+    66% { transform: translate(-20px, 15px) scale(0.95); }
+  }
+
+  .page { position: relative; z-index: 1; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 48px 24px 32px;
+    position: relative;
+  }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(254,213,76,0.12);
+    border: 1px solid rgba(254,213,76,0.25);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 7vw, 56px);
+    letter-spacing: -1px;
+    line-height: 1.05;
+    background: linear-gradient(135deg, #fff 0%, var(--gold) 50%, var(--teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p {
+    color: var(--text-dim);
+    margin-top: 10px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .header p span {
+    color: var(--gold);
+  }
+
+  /* Container */
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* Glass cards */
+  .card {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin: 16px 0;
+    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    animation: cardIn 0.5s ease-out both;
+  }
+  .card:hover {
+    background: var(--glass-hover);
+    border-color: rgba(255,255,255,0.18);
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card h2 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .card-subtitle {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* Inputs */
+  .input-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .text-input {
+    flex: 1;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.25s;
+  }
+  .text-input::placeholder { color: rgba(255,255,255,0.25); }
+  .text-input:focus {
+    border-color: var(--gold);
+    background: rgba(254,213,76,0.05);
+    box-shadow: 0 0 0 3px rgba(254,213,76,0.1);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-spotify {
+    background: linear-gradient(135deg, var(--spotify), #17a34a);
+    color: #fff;
+    font-size: 17px;
+    padding: 16px 36px;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(29,185,84,0.3);
+  }
+  .btn-spotify:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 30px rgba(29,185,84,0.4);
+  }
+  .btn-spotify svg { width: 22px; height: 22px; }
+
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), #f0c030);
+    color: var(--navy);
+    box-shadow: 0 4px 16px rgba(254,213,76,0.25);
+  }
+  .btn-gold:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(254,213,76,0.35);
+  }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,0.15);
+    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 10px;
+  }
+  .btn-ghost:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.25);
+  }
+
+  /* Members */
+  .members-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .member-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    animation: slideIn 0.3s ease-out both;
+  }
+  .member-row:last-child { border-bottom: none; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--navy);
+    flex-shrink: 0;
+  }
+  .avatar-0 { background: linear-gradient(135deg, var(--gold), #f0c030); }
+  .avatar-1 { background: linear-gradient(135deg, var(--teal), #38b2ac); }
+  .avatar-2 { background: linear-gradient(135deg, var(--coral), #e85d5d); }
+  .avatar-3 { background: linear-gradient(135deg, var(--purple), #9333ea); }
+  .avatar-4 { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+
+  .member-info strong { font-weight: 600; font-size: 15px; }
+  .member-info .meta { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+
+  .waiting-pulse {
+    text-align: center;
+    padding: 16px 0;
+    color: var(--text-dim);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px;
+    background: var(--teal);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .pulse-dot:nth-child(2) { animation-delay: 0.2s; }
+  .pulse-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* Day results */
+  .day-card {
+    margin: 14px 0;
+    padding: 22px;
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    transition: all 0.35s ease;
+    animation: cardIn 0.5s ease-out both;
+  }
+  .day-card:nth-child(2) { animation-delay: 0.1s; }
+  .day-card:nth-child(3) { animation-delay: 0.2s; }
+
+  .day-card.winner {
+    background: rgba(254,213,76,0.08);
+    border: 1.5px solid rgba(254,213,76,0.35);
+    box-shadow: 0 0 40px rgba(254,213,76,0.08);
+  }
+
+  .day-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .day-name {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+  }
+  .day-date {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .day-score {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--gold), var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .day-score-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+    margin-top: 2px;
+  }
+
+  .score-bar-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .winner .score-bar-fill {
+    background: linear-gradient(90deg, var(--gold), var(--teal));
+    box-shadow: 0 0 12px rgba(254,213,76,0.4);
+  }
+  .score-bar-fill {
+    background: linear-gradient(90deg, var(--navy-light), rgba(255,255,255,0.2));
+  }
+
+  .best-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, var(--gold), #f0c030);
+    color: var(--navy);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-left: 10px;
+    animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes badgePop {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+  }
+
+  /* Match tags */
+  .matches-section { margin-top: 12px; }
+  .matches-section summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 500;
+    padding: 4px 0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .matches-section summary::before {
+    content: '>';
+    font-family: monospace;
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+  .matches-section[open] summary::before { transform: rotate(90deg); }
+
+  .member-match {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .member-match:last-child { border-bottom: none; }
+  .member-match-name {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .member-match-name .pts {
+    font-weight: 400;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px;
+    transition: transform 0.2s;
+  }
+  .tag:hover { transform: scale(1.05); }
+  .tag-headliner {
+    background: linear-gradient(135deg, rgba(254,213,76,0.2), rgba(254,213,76,0.1));
+    color: var(--gold);
+    border: 1px solid rgba(254,213,76,0.25);
+  }
+  .tag-direct {
+    background: rgba(78,205,196,0.12);
+    color: var(--teal);
+    border: 1px solid rgba(78,205,196,0.2);
+  }
+  .tag-genre {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .tag-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin: 6px 0 4px;
+  }
+  .no-match {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    font-style: italic;
+  }
+
+  /* Status messages */
+  .status {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .status-loading {
+    background: rgba(78,205,196,0.08);
+    border: 1px solid rgba(78,205,196,0.15);
+    color: var(--teal);
+  }
+  .status-ok {
+    background: rgba(29,185,84,0.1);
+    border: 1px solid rgba(29,185,84,0.2);
+    color: var(--spotify);
+  }
+  .status-err {
+    background: rgba(255,107,107,0.1);
+    border: 1px solid rgba(255,107,107,0.2);
+    color: var(--coral);
+  }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.1);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .hidden { display: none; }
-  .share-box { background: #f5f5f5; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; word-break: break-all; margin: 10px 0; cursor: pointer; }
-  .share-box:hover { background: #eee; }
-  #status { padding: 10px; margin: 10px 0; border-radius: 8px; font-size: 14px; }
-  .status-ok { background: #e8f5e9; color: #2e7d32; }
-  .status-err { background: #fce4ec; color: #c62828; }
-  .person-matches { font-size: 12px; color: #777; margin-top: 2px; }
+
+  .hidden { display: none !important; }
+
+  .center { text-align: center; }
+
+  /* Share link toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--navy-mid);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Headliners preview */
+  .headliners-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .headliner-chip {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    opacity: 0.7;
+  }
+  .headliner-chip::after { content: ' \00b7'; margin-left: 6px; color: rgba(255,255,255,0.15); }
+  .headliner-chip:last-child::after { content: ''; }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .container { padding: 0 14px 40px; }
+    .card { padding: 20px; }
+    .day-card { padding: 18px; }
+    .input-group { flex-direction: column; }
+    .btn-gold { width: 100%; }
+    .members-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>JAZZ FEST DAY PICKER</h1>
-  <p>New Orleans Jazz & Heritage Festival 2026 — Weekend 1</p>
+<div class="bg-mesh"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="page">
+  <div class="header">
+    <div class="header-badge">New Orleans 2026</div>
+    <h1>Jazz Fest<br>Day Picker</h1>
+    <p>Connect your Spotify. Find your <span>perfect day</span>.</p>
+  </div>
+
+  <div class="container">
+    <!-- Setup -->
+    <div id="setup-view" class="card center">
+      <h2>Create or Join a Group</h2>
+      <p class="card-subtitle">Everyone connects Spotify, and we match your music taste to the Weekend 1 lineup.</p>
+      <div class="input-group">
+        <input type="text" id="group-input" class="text-input" placeholder="your-group-name" value="" spellcheck="false" autocomplete="off">
+        <button class="btn btn-gold" onclick="joinGroup()">Let's Go</button>
+      </div>
+    </div>
+
+    <!-- Connect Spotify -->
+    <div id="connect-view" class="card center hidden">
+      <h2>Connect Your Spotify</h2>
+      <p class="card-subtitle">We read your top artists (up to 150) to match you with the lineup. Nothing is stored beyond this session.</p>
+      <a id="spotify-btn" class="btn btn-spotify" href="#">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381C8.64 5.801 15.6 6.001 20.101 8.82c.54.3.72 1.02.42 1.56-.299.421-1.02.599-1.44.3z"/></svg>
+        Connect with Spotify
+      </a>
+      <div id="status" class="hidden"></div>
+    </div>
+
+    <!-- Members -->
+    <div id="members-view" class="card hidden">
+      <div class="members-header">
+        <div>
+          <h2>Group: <span id="group-name-display" style="color:var(--gold)"></span></h2>
+        </div>
+        <button class="btn btn-ghost" onclick="copyShareLink()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Copy Invite Link
+        </button>
+      </div>
+      <div id="members-list"></div>
+      <div id="waiting" class="waiting-pulse">
+        <div class="pulse-dot"></div>
+        <div class="pulse-dot"></div>
+        <div class="pulse-dot"></div>
+        <span>Waiting for friends to connect...</span>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-view" class="hidden">
+      <div style="text-align:center;margin:24px 0 8px;">
+        <h2 style="font-family:'Poppins',sans-serif;font-weight:800;font-size:26px;">Your Best Day</h2>
+        <p style="color:var(--text-dim);font-size:14px;margin-top:4px;">Based on everyone's combined listening</p>
+      </div>
+      <div id="day-results"></div>
+    </div>
+  </div>
 </div>
 
-<div class="container">
-  <!-- Step 1: Group setup -->
-  <div id="setup-view" class="card center">
-    <h2>Create or Join a Group</h2>
-    <p style="margin:12px 0;color:#666;">Everyone in your group connects their Spotify, and we'll find the best day for y'all.</p>
-    <div style="margin:20px 0;">
-      <input type="text" id="group-input" class="group-id-input" placeholder="group name" value="">
-    </div>
-    <button class="btn btn-navy" onclick="joinGroup()">Start</button>
-  </div>
-
-  <!-- Step 2: Connect Spotify -->
-  <div id="connect-view" class="card center hidden">
-    <h2>Connect Your Spotify</h2>
-    <p style="margin:12px 0;color:#666;">We'll read your top artists to match you with the lineup.</p>
-    <a id="spotify-btn" class="btn" href="#">Connect with Spotify</a>
-    <div id="status" class="hidden"></div>
-  </div>
-
-  <!-- Members list -->
-  <div id="members-view" class="card hidden">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h2>Group: <span id="group-name-display"></span></h2>
-      <button class="btn btn-small btn-navy" onclick="copyShareLink()">Copy Invite Link</button>
-    </div>
-    <div id="members-list" class="mt"></div>
-    <div id="waiting" class="center mt" style="color:#888;">
-      <div class="spinner"></div>
-      <p style="margin-top:8px;">Waiting for others to connect...</p>
-    </div>
-  </div>
-
-  <!-- Results -->
-  <div id="results-view" class="hidden">
-    <div class="card">
-      <h2 class="center">Best Day for Your Group</h2>
-      <div id="day-results" class="mt"></div>
-    </div>
-  </div>
-</div>
+<div id="toast" class="toast">Link copied to clipboard!</div>
 
 <script>
 const SUPABASE_URL = 'https://txyynpyqaqbyssbabxrz.supabase.co';
@@ -104,21 +647,23 @@ const REDIRECT_URI = window.location.origin + window.location.pathname;
 const SCOPES = 'user-top-read';
 
 const LINEUP = {
-  "Friday, April 24": {
-    headliners: ["Jon Batiste", "Lorde", "Sean Paul", "Big Freedia", "Ani DiFranco"],
+  "Friday": {
+    date: "April 24",
+    headliners: ["Jon Batiste","Lorde","Sean Paul","Big Freedia","Ani DiFranco"],
     all: ["Jon Batiste","Lorde","Sean Paul","Big Freedia","Ani DiFranco","Cyril Neville","Dirty Dozen Brass Band","Hiromi","Protoje","Sevana","GIVERS","Treme Brass Band","Lost Bayou Ramblers","Papa Mali","Seratones","Jesse McBride Big Band","Joy Clark","Rosie Ledet","Naughty Professor","Astral Project","Adonis Rose","Los Skarnales","Billy Iuso","Bon Bon Vivant","Parlor Greens","Loose Cattle","TBC Brass Band","Free Agents Brass Band","Louis Michot","Bonsoir Catin","Smoking Time Jazz Club","New Wave Brass Band","Free Spirit Brass Band","Lil' Ed & The Blues Imperials","Dixie Cups","Nell Simmons-Bradley","Sean Schulich","Conjunto Tierra Linda","Wendell Brunious"]
   },
-  "Saturday, April 25": {
-    headliners: ["Stevie Nicks", "Tyler Childers", "Nas", "Jason Isbell", "Rhiannon Giddens"],
+  "Saturday": {
+    date: "April 25",
+    headliners: ["Stevie Nicks","Tyler Childers","Nas","Jason Isbell","Rhiannon Giddens"],
     all: ["Stevie Nicks","Tyler Childers","Nas","Jason Isbell","Rhiannon Giddens","Bruce Hornsby","The Revivalists","Burning Spear","Dave Koz","Samantha Fish","John Boutté","Kermit Ruffins","Sonny Landreth","Dwayne Dopsie","Davell Crawford","Lutan Fyah","Pine Leaf Boys","Stooges Brass Band","Tin Men","Cristina Kaminis","Curley Taylor","Little Freddie King Blues Band","The Deslondes","Preservation Brass","Don Vappie","Crowe Boys","HaSizzle","Jelly Joseph","Ever More Nest","The Desert Nudes","Rumba Buena","Big 6 Brass Band"]
   },
-  "Sunday, April 26": {
-    headliners: ["Rod Stewart", "David Byrne", "St. Vincent", "The Isley Brothers", "Irma Thomas"],
+  "Sunday": {
+    date: "April 26",
+    headliners: ["Rod Stewart","David Byrne","St. Vincent","The Isley Brothers","Irma Thomas"],
     all: ["Rod Stewart","David Byrne","St. Vincent","The Isley Brothers","Irma Thomas","Jon Batiste","Carlos Vives","Ron Carter","Shirley Caesar","Boyfriend","Leftover Salmon","Catherine Russell","Marcia Ball","Tuba Skinny","Zachary Richard","Glen David Andrews Band","New Orleans Nightcrawlers","Kristin Diable","People Museum","Paul Sanchez","Chris Thomas King","Erica Falls","New Birth Brass Band","Kinfolk Brass Band","Trombone Shorty Academy","Horace Trahan","Jambalaya Cajun Band","Kelly Love Jones","River Eckert","Mahogany Brass Band","Young Pinstripe Brass Band","Knockaz Brass Band","Rockin' Dopsie Jr.","New Orleans Klezmer Allstars","Roger Lewis"]
   }
 };
 
-// Genre knowledge for lineup artists
 const ARTIST_GENRES = {
   "Jon Batiste":["jazz","funk","soul","r&b","pop"],"Lorde":["art pop","electropop","indie pop"],"Sean Paul":["dancehall","reggae","pop"],"Big Freedia":["bounce","hip hop","dance"],"Ani DiFranco":["folk","singer-songwriter","indie"],
   "Dirty Dozen Brass Band":["brass band","jazz","funk"],"Hiromi":["jazz","jazz fusion"],"Protoje":["reggae"],"Seratones":["soul","rock"],"Naughty Professor":["jazz funk","funk","jazz"],
@@ -147,23 +692,19 @@ const ARTIST_GENRES = {
 let groupId = null;
 let pollInterval = null;
 
-// Check URL for group param or Spotify callback
 function init() {
   const params = new URLSearchParams(window.location.search);
   const hash = new URLSearchParams(window.location.hash.substring(1));
 
-  // Check for Spotify callback (implicit grant)
   if (hash.get('access_token')) {
     const token = hash.get('access_token');
-    const state = hash.get('state'); // group id
-    // Clean URL
+    const state = hash.get('state');
     history.replaceState(null, '', window.location.pathname + '?group=' + encodeURIComponent(state));
     groupId = state;
     handleSpotifyCallback(token);
     return;
   }
 
-  // Check for group in URL
   if (params.get('group')) {
     groupId = params.get('group');
     document.getElementById('group-input').value = groupId;
@@ -182,11 +723,9 @@ function joinGroup() {
   document.getElementById('members-view').classList.remove('hidden');
   document.getElementById('group-name-display').textContent = groupId;
 
-  // Set up Spotify auth link
   const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&state=${encodeURIComponent(groupId)}`;
   document.getElementById('spotify-btn').href = authUrl;
 
-  // Start polling for members
   loadMembers();
   pollInterval = setInterval(loadMembers, 5000);
 }
@@ -200,31 +739,25 @@ async function handleSpotifyCallback(token) {
 
   const status = document.getElementById('status');
   status.classList.remove('hidden');
-  status.className = '';
+  status.className = 'status status-loading';
   status.innerHTML = '<div class="spinner"></div> Fetching your top artists...';
 
   try {
     const headers = { 'Authorization': `Bearer ${token}` };
-
-    // Get user profile
     const me = await fetch('https://api.spotify.com/v1/me', { headers }).then(r => r.json());
     const displayName = me.display_name || 'Unknown';
     const spotifyId = me.id;
 
-    // Get top artists across all time ranges
     const artists = {};
     for (const term of ['short_term', 'medium_term', 'long_term']) {
       const data = await fetch(`https://api.spotify.com/v1/me/top/artists?time_range=${term}&limit=50`, { headers }).then(r => r.json());
       for (const a of (data.items || [])) {
-        if (!artists[a.name]) {
-          artists[a.name] = a.genres || [];
-        }
+        if (!artists[a.name]) artists[a.name] = a.genres || [];
       }
     }
 
-    status.innerHTML = `<div class="spinner"></div> Saving ${Object.keys(artists).length} artists for ${displayName}...`;
+    status.innerHTML = '<div class="spinner"></div> Saving your music profile...';
 
-    // Upsert to Supabase
     const resp = await fetch(`${SUPABASE_URL}/rest/v1/jazzfest_groups`, {
       method: 'POST',
       headers: {
@@ -233,73 +766,65 @@ async function handleSpotifyCallback(token) {
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates'
       },
-      body: JSON.stringify({
-        group_id: groupId,
-        display_name: displayName,
-        spotify_id: spotifyId,
-        top_artists: artists
-      })
+      body: JSON.stringify({ group_id: groupId, display_name: displayName, spotify_id: spotifyId, top_artists: artists })
     });
 
-    if (!resp.ok) {
-      const err = await resp.text();
-      throw new Error(err);
-    }
+    if (!resp.ok) throw new Error(await resp.text());
 
-    status.className = 'status-ok';
-    status.innerHTML = `Connected as <strong>${displayName}</strong> — ${Object.keys(artists).length} artists found!`;
+    status.className = 'status status-ok';
+    status.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Connected as <strong>${displayName}</strong> &mdash; ${Object.keys(artists).length} artists found`;
 
-    // Set up auth link for re-connect and start polling
     const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&state=${encodeURIComponent(groupId)}`;
     document.getElementById('spotify-btn').href = authUrl;
 
     loadMembers();
     pollInterval = setInterval(loadMembers, 5000);
-
   } catch (e) {
-    status.className = 'status-err';
+    status.className = 'status status-err';
     status.innerHTML = `Error: ${e.message}`;
   }
 }
 
 async function loadMembers() {
   if (!groupId) return;
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/rest/v1/jazzfest_groups?group_id=eq.${encodeURIComponent(groupId)}&select=display_name,top_artists,spotify_id`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    const members = await resp.json();
+    renderMembers(members);
+    if (members.length >= 1) renderResults(members);
+  } catch(e) { /* silent retry */ }
+}
 
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/jazzfest_groups?group_id=eq.${encodeURIComponent(groupId)}&select=display_name,top_artists,spotify_id`,
-    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-  );
-  const members = await resp.json();
-
-  // Render members
+function renderMembers(members) {
   const list = document.getElementById('members-list');
-  list.innerHTML = members.map(m => {
+  const colors = ['avatar-0','avatar-1','avatar-2','avatar-3','avatar-4'];
+  list.innerHTML = members.map((m, i) => {
     const count = Object.keys(m.top_artists || {}).length;
     const initial = (m.display_name || '?')[0].toUpperCase();
-    return `<div class="connected">
-      <div class="avatar">${initial}</div>
-      <div><strong>${m.display_name}</strong><br><span style="color:#888;font-size:12px;">${count} artists</span></div>
+    return `<div class="member-row" style="animation-delay:${i*0.05}s">
+      <div class="avatar ${colors[i % colors.length]}">${initial}</div>
+      <div class="member-info">
+        <strong>${m.display_name}</strong>
+        <div class="meta">${count} top artists</div>
+      </div>
     </div>`;
   }).join('');
 
   if (members.length === 0) {
-    list.innerHTML = '<p style="color:#888;text-align:center;padding:10px;">No one connected yet</p>';
-  }
-
-  // Show results if at least 1 person
-  if (members.length >= 1) {
-    renderResults(members);
+    list.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:16px;">No one connected yet</p>';
   }
 }
 
-function scoreDay(members, dayName, dayData) {
+function scoreDay(members, dayData) {
   let totalScore = 0;
   const memberDetails = [];
 
   for (const member of members) {
     const userArtists = member.top_artists || {};
-    const userNames = Object.keys(userArtists);
-    const userNamesLower = new Set(userNames.map(n => n.toLowerCase()));
+    const userNamesLower = new Set(Object.keys(userArtists).map(n => n.toLowerCase()));
     const userGenres = new Set();
     for (const genres of Object.values(userArtists)) {
       for (const g of (genres || [])) userGenres.add(g.toLowerCase());
@@ -309,25 +834,23 @@ function scoreDay(members, dayName, dayData) {
     const directMatches = [];
     const genreMatches = [];
 
-    // Direct artist matches
     for (const artist of dayData.all) {
       if (userNamesLower.has(artist.toLowerCase())) {
-        const isHeadliner = dayData.headliners.includes(artist);
-        score += isHeadliner ? 25 : 12;
-        directMatches.push({ artist, headliner: isHeadliner });
+        const isH = dayData.headliners.includes(artist);
+        score += isH ? 25 : 12;
+        directMatches.push({ artist, headliner: isH });
       }
     }
 
-    // Genre matches
     for (const artist of dayData.all) {
       if (userNamesLower.has(artist.toLowerCase())) continue;
       const aGenres = ARTIST_GENRES[artist] || [];
       const overlap = aGenres.filter(g => userGenres.has(g.toLowerCase()));
       if (overlap.length > 0) {
-        const isHeadliner = dayData.headliners.includes(artist);
-        const gs = isHeadliner ? overlap.length * 4 : overlap.length * 1.5;
+        const isH = dayData.headliners.includes(artist);
+        const gs = isH ? overlap.length * 4 : overlap.length * 1.5;
         score += gs;
-        genreMatches.push({ artist, genres: overlap, headliner: isHeadliner, score: gs });
+        genreMatches.push({ artist, genres: overlap, headliner: isH, score: gs });
       }
     }
 
@@ -343,41 +866,49 @@ function renderResults(members) {
   document.getElementById('results-view').classList.remove('hidden');
 
   const days = Object.entries(LINEUP).map(([name, data]) => {
-    const result = scoreDay(members, name, data);
-    return { name, ...result };
+    const result = scoreDay(members, data);
+    return { name, date: data.date, headliners: data.headliners, ...result };
   });
 
   days.sort((a, b) => b.totalScore - a.totalScore);
   const maxScore = days[0].totalScore || 1;
 
-  const container = document.getElementById('day-results');
-  container.innerHTML = days.map((day, i) => {
+  document.getElementById('day-results').innerHTML = days.map((day, i) => {
     const pct = Math.round((day.totalScore / maxScore) * 100);
     const isWinner = i === 0;
 
     const memberHtml = day.memberDetails.map(md => {
       const direct = md.directMatches.map(m =>
-        `<span class="match-tag ${m.headliner ? 'headliner' : ''}">${m.artist}</span>`
+        `<span class="tag ${m.headliner ? 'tag-headliner' : 'tag-direct'}">${m.artist}</span>`
       ).join('');
       const genre = md.genreMatches.map(m =>
-        `<span class="match-tag genre">${m.artist}</span>`
+        `<span class="tag tag-genre">${m.artist}</span>`
       ).join('');
-      return `<div style="margin:8px 0;">
-        <strong>${md.name}</strong> <span style="color:#888;font-size:12px;">(${Math.round(md.score)} pts)</span>
-        ${direct ? '<br><span style="font-size:11px;color:#666;">Artists you listen to:</span> ' + direct : ''}
-        ${genre ? '<br><span style="font-size:11px;color:#666;">Genre matches:</span> ' + genre : ''}
-        ${!direct && !genre ? '<br><span style="font-size:11px;color:#999;">No strong matches</span>' : ''}
+      return `<div class="member-match">
+        <div class="member-match-name">${md.name} <span class="pts">${Math.round(md.score)} pts</span></div>
+        ${direct ? '<div class="tag-label">Artists you listen to</div>' + direct : ''}
+        ${genre ? '<div class="tag-label">Genre matches</div>' + genre : ''}
+        ${!direct && !genre ? '<div class="no-match">No strong matches</div>' : ''}
       </div>`;
     }).join('');
 
-    return `<div class="day-card card ${isWinner ? 'winner' : ''}">
-      <div class="day-header">
-        <h3>${day.name} ${isWinner ? '<span class="winner-label">BEST DAY</span>' : ''}</h3>
-        <span class="score-badge">${Math.round(day.totalScore)} pts</span>
+    const headlinersHtml = day.headliners.map(h => `<span class="headliner-chip">${h}</span>`).join('');
+
+    return `<div class="day-card ${isWinner ? 'winner' : ''}" style="animation-delay:${i*0.1}s">
+      <div class="day-top">
+        <div>
+          <div class="day-name">${day.name}${isWinner ? '<span class="best-badge">Best Match</span>' : ''}</div>
+          <div class="day-date">${day.date}</div>
+        </div>
+        <div>
+          <div class="day-score">${Math.round(day.totalScore)}</div>
+          <div class="day-score-label">points</div>
+        </div>
       </div>
-      <div class="bar-container"><div class="bar" style="width:${pct}%"></div></div>
-      <details style="margin-top:8px;">
-        <summary style="cursor:pointer;font-size:13px;color:#666;">Show individual matches</summary>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+      <div class="headliners-preview">${headlinersHtml}</div>
+      <details class="matches-section">
+        <summary>Show individual breakdowns</summary>
         ${memberHtml}
       </details>
     </div>`;
@@ -386,12 +917,16 @@ function renderResults(members) {
 
 function copyShareLink() {
   const link = window.location.origin + window.location.pathname + '?group=' + encodeURIComponent(groupId);
-  navigator.clipboard.writeText(link).then(() => {
-    const btn = event.target;
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy Invite Link', 2000);
-  });
+  navigator.clipboard.writeText(link);
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
 }
+
+// Enter key on input
+document.getElementById('group-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinGroup();
+});
 
 init();
 </script>
