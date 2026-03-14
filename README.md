@@ -2,8 +2,9 @@
 
 A web app that helps friend groups pick the best day to attend New Orleans Jazz Fest by cross-referencing everyone's Spotify listening history with the festival lineup.
 
-![Group view](screenshots/group.png)
-![Results view](screenshots/results.png)
+![Hero](screenshots/hero.png)
+![Results](screenshots/results.png)
+![Breakdown](screenshots/breakdown.png)
 
 ## How it works
 
