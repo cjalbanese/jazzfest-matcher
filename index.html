@@ -447,7 +447,8 @@
     margin: 2px;
     transition: transform 0.2s;
   }
-  .tag:hover { transform: scale(1.05); }
+  .tag:hover { transform: scale(1.05); text-decoration: none; }
+  a.tag { text-decoration: none; cursor: pointer; }
   .tag-headliner {
     background: linear-gradient(135deg, rgba(254,213,76,0.2), rgba(254,213,76,0.1));
     color: var(--gold);
@@ -927,11 +928,12 @@ function renderResults(members) {
     const isWinner = i === 0;
 
     const memberHtml = day.memberDetails.map(md => {
+      const spotifyLink = (name) => `https://open.spotify.com/search/${encodeURIComponent(name)}`;
       const direct = md.directMatches.map(m =>
-        `<span class="tag ${m.headliner ? 'tag-headliner' : 'tag-direct'}">${m.artist}</span>`
+        `<a class="tag ${m.headliner ? 'tag-headliner' : 'tag-direct'}" href="${spotifyLink(m.artist)}" target="_blank" rel="noopener">${m.artist}</a>`
       ).join('');
       const genre = md.genreMatches.map(m =>
-        `<span class="tag tag-genre">${m.artist}</span>`
+        `<a class="tag tag-genre" href="${spotifyLink(m.artist)}" target="_blank" rel="noopener">${m.artist}</a>`
       ).join('');
       return `<div class="member-match">
         <div class="member-match-name">${md.name} <span class="pts">${Math.round(md.score)} pts</span></div>
@@ -941,7 +943,7 @@ function renderResults(members) {
       </div>`;
     }).join('');
 
-    const headlinersHtml = day.headliners.map(h => `<span class="headliner-chip">${h}</span>`).join('');
+    const headlinersHtml = day.headliners.map(h => `<a class="headliner-chip" href="https://open.spotify.com/search/${encodeURIComponent(h)}" target="_blank" rel="noopener" style="text-decoration:none;">${h}</a>`).join('');
 
     return `<div class="day-card ${isWinner ? 'winner' : ''}" style="animation-delay:${i*0.1}s">
       <div class="day-top">
