@@ -651,7 +651,7 @@ const LINEUP = {
   "Friday": {
     date: "April 24",
     headliners: ["Jon Batiste","Lorde","Sean Paul","Big Freedia","Ani DiFranco"],
-    all: ["Jon Batiste","Lorde","Sean Paul","Big Freedia","Ani DiFranco","Cyril Neville","Dirty Dozen Brass Band","Hiromi","Protoje","Sevana","GIVERS","Treme Brass Band","Lost Bayou Ramblers","Papa Mali","Seratones","Jesse McBride Big Band","Joy Clark","Rosie Ledet","Naughty Professor","Astral Project","Adonis Rose","Los Skarnales","Billy Iuso","Bon Bon Vivant","Parlor Greens","Loose Cattle","TBC Brass Band","Free Agents Brass Band","Louis Michot","Bonsoir Catin","Smoking Time Jazz Club","New Wave Brass Band","Free Spirit Brass Band","Lil' Ed & The Blues Imperials","Dixie Cups","Nell Simmons-Bradley","Sean Schulich","Conjunto Tierra Linda","Wendell Brunious"]
+    all: ["Jon Batiste","Lorde","Sean Paul","Big Freedia","Ani DiFranco","Cyril Neville","The Dirty Dozen Brass Band","Hiromi","Protoje","Sevana","GIVERS","Treme Brass Band","Lost Bayou Ramblers","Papa Mali","Seratones","Jesse McBride Big Band","Joy Clark","Rosie Ledet","Naughty Professor","Astral Project","Adonis Rose","Los Skarnales","Billy Iuso","Bon Bon Vivant","Parlor Greens","Loose Cattle","TBC Brass Band","Free Agents Brass Band","Louis Michot","Bonsoir Catin","Smoking Time Jazz Club","New Wave Brass Band","Free Spirit Brass Band","Lil' Ed & The Blues Imperials","Dixie Cups","Nell Simmons-Bradley","Sean Schulich","Conjunto Tierra Linda","Wendell Brunious"]
   },
   "Saturday": {
     date: "April 25",
@@ -667,7 +667,7 @@ const LINEUP = {
 
 const ARTIST_GENRES = {
   "Jon Batiste":["jazz","funk","soul","r&b","pop"],"Lorde":["art pop","electropop","indie pop"],"Sean Paul":["dancehall","reggae","pop"],"Big Freedia":["bounce","hip hop","dance"],"Ani DiFranco":["folk","singer-songwriter","indie"],
-  "Dirty Dozen Brass Band":["brass band","jazz","funk"],"Hiromi":["jazz","jazz fusion"],"Protoje":["reggae"],"Seratones":["soul","rock"],"Naughty Professor":["jazz funk","funk","jazz"],
+  "The Dirty Dozen Brass Band":["brass band","jazz","funk"],"Hiromi":["jazz","jazz fusion"],"Protoje":["reggae"],"Seratones":["soul","rock"],"Naughty Professor":["jazz funk","funk","jazz"],
   "Stevie Nicks":["classic rock","rock","pop rock"],"Tyler Childers":["country","folk","americana"],"Nas":["hip hop","east coast hip hop","rap"],"Jason Isbell":["americana","country rock","singer-songwriter"],
   "Rhiannon Giddens":["folk","americana","bluegrass"],"Bruce Hornsby":["piano rock","jazz","pop rock"],"The Revivalists":["rock","southern rock"],"Burning Spear":["reggae","roots reggae"],
   "Samantha Fish":["blues","blues rock"],"Kermit Ruffins":["jazz","new orleans jazz"],"The Deslondes":["americana","country","roots"],"Dave Koz":["smooth jazz","jazz"],
@@ -823,8 +823,12 @@ async function handleSpotifyCallback(code) {
     // Scan liked songs for lineup artist matches (weight = 2, between genre and top artist)
     status.innerHTML = '<div class="spinner"></div> Scanning your liked songs...';
     const allLineupArtists = new Set();
+    const normalizeStr = (s) => s.toLowerCase().replace(/^the /, '');
     for (const day of Object.values(LINEUP)) {
-      for (const a of day.all) allLineupArtists.add(a.toLowerCase());
+      for (const a of day.all) {
+        allLineupArtists.add(a.toLowerCase());
+        allLineupArtists.add(normalizeStr(a));
+      }
     }
     let offset = 0;
     const limit = 50;
@@ -836,7 +840,7 @@ async function handleSpotifyCallback(code) {
       if (items.length === 0) break;
       for (const item of items) {
         for (const a of (item.track?.artists || [])) {
-          if (allLineupArtists.has(a.name.toLowerCase()) && !artists[a.name]) {
+          if ((allLineupArtists.has(a.name.toLowerCase()) || allLineupArtists.has(normalizeStr(a.name))) && !artists[a.name]) {
             artists[a.name] = { genres: [], weight: 2, source: 'library' };
           }
         }
@@ -915,13 +919,17 @@ function scoreDay(members, dayData) {
   for (const member of members) {
     const userArtists = member.top_artists || {};
     // Build lookup: lowercase name -> { weight, genres }
+    // Also index without leading "The " for fuzzy matching
+    const normalize = (s) => s.toLowerCase().replace(/^the /, '');
     const artistLookup = {};
     const userGenres = new Set();
     for (const [name, data] of Object.entries(userArtists)) {
       // Support both old format (genres array) and new format ({genres, weight})
       const genres = Array.isArray(data) ? data : (data.genres || []);
       const weight = Array.isArray(data) ? 1 : (data.weight || 1);
-      artistLookup[name.toLowerCase()] = { weight, genres };
+      const entry = { weight, genres };
+      artistLookup[name.toLowerCase()] = entry;
+      artistLookup[normalize(name)] = entry; // also index without "The "
       for (const g of genres) userGenres.add(g.toLowerCase());
     }
 
@@ -930,7 +938,7 @@ function scoreDay(members, dayData) {
     const genreMatches = [];
 
     for (const artist of dayData.all) {
-      const entry = artistLookup[artist.toLowerCase()];
+      const entry = artistLookup[artist.toLowerCase()] || artistLookup[normalize(artist)];
       if (entry) {
         const isH = dayData.headliners.includes(artist);
         const base = isH ? 25 : 12;
@@ -941,7 +949,7 @@ function scoreDay(members, dayData) {
     }
 
     for (const artist of dayData.all) {
-      if (artistLookup[artist.toLowerCase()]) continue;
+      if (artistLookup[artist.toLowerCase()] || artistLookup[normalize(artist)]) continue;
       const aGenres = ARTIST_GENRES[artist] || [];
       const overlap = aGenres.filter(g => userGenres.has(g.toLowerCase()));
       if (overlap.length > 0) {
