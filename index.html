@@ -772,7 +772,7 @@ function joinGroup() {
   document.getElementById('spotify-btn').onclick = (e) => { e.preventDefault(); startSpotifyAuth(); };
 
   loadMembers();
-  pollInterval = setInterval(loadMembers, 5000);
+  pollInterval = setInterval(loadMembers, 30000);
 }
 
 async function handleSpotifyCallback(code) {
@@ -827,7 +827,7 @@ async function handleSpotifyCallback(code) {
     document.getElementById('spotify-btn').onclick = (e) => { e.preventDefault(); startSpotifyAuth(); };
 
     loadMembers();
-    pollInterval = setInterval(loadMembers, 5000);
+    pollInterval = setInterval(loadMembers, 30000);
   } catch (e) {
     status.className = 'status status-err';
     status.innerHTML = `Error: ${e.message}`;
